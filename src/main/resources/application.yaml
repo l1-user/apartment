@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: springboot-project
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 2005-02-02 #改成你自己的密码
+    url: jdbc:mysql:///apartment_hubs #改成你自己的数据库名称
+
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: is_deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  type-aliases-package: com.apartment.entity
