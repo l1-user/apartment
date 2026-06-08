@@ -6,10 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @MapperScan("com.wanhe.apartment.mapper")
-public class Day2SpringbootProjectApplication {
+public class apartment {
 
     public static void main(String[] args) {
-        SpringApplication.run(Day2SpringbootProjectApplication.class, args);
+        SpringApplication.run(apartment.class, args);
     }
 
 }
