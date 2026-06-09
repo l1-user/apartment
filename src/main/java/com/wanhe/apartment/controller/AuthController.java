@@ -1,8 +1,11 @@
 package com.wanhe.apartment.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wanhe.apartment.dto.LoginRequest;
 import com.wanhe.apartment.dto.LoginResponse;
+import com.wanhe.apartment.entity.SysUser;
 import com.wanhe.apartment.service.IAuthService;
+import com.wanhe.apartment.service.ISysUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +27,9 @@ public class AuthController {
     
     @Autowired
     private IAuthService authService;
+    
+    @Autowired
+    private ISysUserService sysUserService;
     
     /**
      * 用户登录
@@ -109,5 +115,69 @@ public class AuthController {
             result.put("message", "请先登录");
             return ResponseEntity.ok(result);
         }
+    }
+    
+    /**
+     * 修改密码
+     */
+    @PostMapping("/changePassword")
+    @Operation(summary = "修改密码", description = "用户修改自己的密码")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, Object> request) {
+        Long userId = ((Number) request.get("userId")).longValue();
+        String oldPassword = (String) request.get("oldPassword");
+        String newPassword = (String) request.get("newPassword");
+        
+        // 验证参数
+        if (oldPassword == null || oldPassword.trim().isEmpty()) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "请输入原密码");
+            return ResponseEntity.ok(result);
+        }
+        
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "请输入新密码");
+            return ResponseEntity.ok(result);
+        }
+        
+        if (newPassword.length() < 6) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "新密码长度不能少于6位");
+            return ResponseEntity.ok(result);
+        }
+        
+        // 查询用户
+        SysUser user = sysUserService.getById(userId);
+        if (user == null) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "用户不存在");
+            return ResponseEntity.ok(result);
+        }
+        
+        // 验证原密码
+        if (!user.getPassword().equals(oldPassword)) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "原密码错误");
+            return ResponseEntity.ok(result);
+        }
+        
+        // 更新密码
+        user.setPassword(newPassword);
+        boolean success = sysUserService.updateById(user);
+        
+        Map<String, Object> result = new HashMap<>();
+        if (success) {
+            result.put("success", true);
+            result.put("message", "密码修改成功");
+        } else {
+            result.put("success", false);
+            result.put("message", "密码修改失败");
+        }
+        return ResponseEntity.ok(result);
     }
 }

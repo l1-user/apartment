@@ -62,8 +62,8 @@ public class AuthServiceImpl implements IAuthService {
         // 查询用户
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUser::getUsername, request.getUsername());
-        wrapper.eq(SysUser::getIsDeleted, 0);
-        wrapper.eq(SysUser::getStatus, 1);
+        wrapper.eq(SysUser::getIsDeleted, (byte) 0);
+        wrapper.eq(SysUser::getStatus, (byte) 1);
         SysUser user = sysUserService.getOne(wrapper);
         
         // 验证密码
