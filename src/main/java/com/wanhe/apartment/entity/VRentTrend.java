@@ -1,5 +1,7 @@
 package com.wanhe.apartment.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +29,7 @@ public class VRentTrend implements Serializable {
     /**
      * 门店ID
      */
+    @TableId(value = "store_id", type = IdType.INPUT)
     private Long storeId;
 
     /**

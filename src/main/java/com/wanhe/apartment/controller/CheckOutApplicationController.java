@@ -24,16 +24,16 @@ public class CheckOutApplicationController {
     private ICheckOutApplicationService checkOutApplicationService;
 
     @GetMapping("/showAll")
-    @Operation(summary = "查询所有退租申请信息")
+    @Operation(summary = "查询所有退租申请")
     public List<CheckOutApplication> showAll() {
         LambdaQueryWrapper<CheckOutApplication> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CheckOutApplication::getIsDeleted, 0);
-        wrapper.orderByDesc(CheckOutApplication::getApplicationDate);
+        wrapper.orderByDesc(CheckOutApplication::getCreatedTime);
         return checkOutApplicationService.list(wrapper);
     }
 
     @GetMapping("/page")
-    @Operation(summary = "分页查询退租申请信息")
+    @Operation(summary = "分页查询退租申请")
     public Page<CheckOutApplication> page(
             @Parameter(description = "当前页码") @RequestParam(defaultValue = "1") Integer current,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") Integer size,
@@ -50,87 +50,88 @@ public class CheckOutApplicationController {
             wrapper.eq(CheckOutApplication::getRoomId, roomId);
         }
         if (applicationStatus != null) {
-            wrapper.eq(CheckOutApplication::getApplicationStatus, applicationStatus);
+            wrapper.eq(CheckOutApplication::getApplicationStatus, applicationStatus.byteValue());
         }
-        wrapper.orderByDesc(CheckOutApplication::getApplicationDate);
+        wrapper.orderByDesc(CheckOutApplication::getCreatedTime);
         return checkOutApplicationService.page(page, wrapper);
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "根据ID查询退租申请信息")
-    public CheckOutApplication showById(@Parameter(description = "退租申请ID") @PathVariable Long id) {
+    @Operation(summary = "根据ID查询退租申请")
+    public CheckOutApplication showById(@Parameter(description = "申请ID") @PathVariable Long id) {
         return checkOutApplicationService.getById(id);
     }
 
     @PostMapping("/save")
     @Operation(summary = "新增退租申请")
-    public boolean save(@RequestBody CheckOutApplication checkOutApplication) {
-        checkOutApplication.setIsDeleted((byte) 0);
-        checkOutApplication.setApplicationStatus((byte) 1);
-        checkOutApplication.setApplicationDate(LocalDate.now());
-        return checkOutApplicationService.save(checkOutApplication);
+    public boolean save(@RequestBody CheckOutApplication application) {
+        application.setIsDeleted((byte) 0);
+        application.setCreatedTime(LocalDateTime.now());
+        application.setApplicationDate(LocalDate.now());
+        application.setApplicationStatus((byte) 1);
+        application.setApplicationNo("CO" + System.currentTimeMillis());
+        return checkOutApplicationService.save(application);
     }
 
     @PutMapping("/update")
-    @Operation(summary = "更新退租申请信息")
-    public boolean update(@RequestBody CheckOutApplication checkOutApplication) {
-        return checkOutApplicationService.updateById(checkOutApplication);
+    @Operation(summary = "更新退租申请")
+    public boolean update(@RequestBody CheckOutApplication application) {
+        application.setUpdatedTime(LocalDateTime.now());
+        return checkOutApplicationService.updateById(application);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "逻辑删除退租申请")
-    public boolean delete(@Parameter(description = "退租申请ID") @PathVariable Long id) {
-        CheckOutApplication checkOutApplication = new CheckOutApplication();
-        checkOutApplication.setId(id);
-        checkOutApplication.setIsDeleted((byte) 1);
-        return checkOutApplicationService.updateById(checkOutApplication);
+    @Operation(summary = "删除退租申请")
+    public boolean delete(@Parameter(description = "申请ID") @PathVariable Long id) {
+        CheckOutApplication application = new CheckOutApplication();
+        application.setId(id);
+        application.setIsDeleted((byte) 1);
+        return checkOutApplicationService.updateById(application);
     }
 
     @PatchMapping("/approve/{id}")
-    @Operation(summary = "审核通过退租申请")
+    @Operation(summary = "审核通过")
     public boolean approve(
-            @Parameter(description = "退租申请ID") @PathVariable Long id,
+            @Parameter(description = "申请ID") @PathVariable Long id,
             @Parameter(description = "审核人") @RequestParam(required = false) String approver,
             @Parameter(description = "审核备注") @RequestParam(required = false) String approveRemark) {
-        CheckOutApplication checkOutApplication = checkOutApplicationService.getById(id);
-        if (checkOutApplication != null) {
-            checkOutApplication.setApplicationStatus((byte) 2);
-            checkOutApplication.setApprover(approver);
-            checkOutApplication.setApproveRemark(approveRemark);
-            checkOutApplication.setApproveTime(LocalDateTime.now());
-            return checkOutApplicationService.updateById(checkOutApplication);
-        }
-        return false;
+        CheckOutApplication application = new CheckOutApplication();
+        application.setId(id);
+        application.setApplicationStatus((byte) 2);
+        application.setApprover(approver);
+        application.setApproveRemark(approveRemark);
+        application.setApproveTime(LocalDateTime.now());
+        return checkOutApplicationService.updateById(application);
     }
 
     @PatchMapping("/reject/{id}")
-    @Operation(summary = "审核拒绝退租申请")
+    @Operation(summary = "审核拒绝")
     public boolean reject(
-            @Parameter(description = "退租申请ID") @PathVariable Long id,
+            @Parameter(description = "申请ID") @PathVariable Long id,
             @Parameter(description = "审核人") @RequestParam(required = false) String approver,
             @Parameter(description = "审核备注") @RequestParam(required = false) String approveRemark) {
-        CheckOutApplication checkOutApplication = checkOutApplicationService.getById(id);
-        if (checkOutApplication != null) {
-            checkOutApplication.setApplicationStatus((byte) 3);
-            checkOutApplication.setApprover(approver);
-            checkOutApplication.setApproveRemark(approveRemark);
-            checkOutApplication.setApproveTime(LocalDateTime.now());
-            return checkOutApplicationService.updateById(checkOutApplication);
-        }
-        return false;
+        CheckOutApplication application = new CheckOutApplication();
+        application.setId(id);
+        application.setApplicationStatus((byte) 3);
+        application.setApprover(approver);
+        application.setApproveRemark(approveRemark);
+        application.setApproveTime(LocalDateTime.now());
+        return checkOutApplicationService.updateById(application);
     }
 
     @PatchMapping("/complete/{id}")
-    @Operation(summary = "完成退租申请")
+    @Operation(summary = "完成退房")
     public boolean complete(
-            @Parameter(description = "退租申请ID") @PathVariable Long id,
-            @Parameter(description = "实际退租日期") @RequestParam(required = false) LocalDate actualCheckOutDate) {
-        CheckOutApplication checkOutApplication = checkOutApplicationService.getById(id);
-        if (checkOutApplication != null) {
-            checkOutApplication.setApplicationStatus((byte) 4);
-            checkOutApplication.setActualCheckOutDate(actualCheckOutDate);
-            return checkOutApplicationService.updateById(checkOutApplication);
+            @Parameter(description = "申请ID") @PathVariable Long id,
+            @Parameter(description = "实际退房日期") @RequestParam(required = false) String actualCheckOutDate) {
+        CheckOutApplication application = new CheckOutApplication();
+        application.setId(id);
+        application.setApplicationStatus((byte) 4);
+        if (actualCheckOutDate != null && !actualCheckOutDate.isEmpty()) {
+            application.setActualCheckOutDate(LocalDate.parse(actualCheckOutDate));
+        } else {
+            application.setActualCheckOutDate(LocalDate.now());
         }
-        return false;
+        return checkOutApplicationService.updateById(application);
     }
 }

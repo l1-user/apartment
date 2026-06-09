@@ -106,19 +106,14 @@ public class SysUserController {
         return sysUserService.updateById(user);
     }
 
-    @PostMapping("/login")
-    @Operation(summary = "用户登录")
-    public SysUser login(
-            @Parameter(description = "用户名") @RequestParam String username,
-            @Parameter(description = "密码") @RequestParam String password) {
+    @GetMapping("/getTenantUsers")
+    @Operation(summary = "获取所有租户用户")
+    public List<SysUser> getTenantUsers() {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUser::getUsername, username);
+        wrapper.eq(SysUser::getUserType, 8);
         wrapper.eq(SysUser::getIsDeleted, 0);
         wrapper.eq(SysUser::getStatus, 1);
-        SysUser user = sysUserService.getOne(wrapper);
-        if (user != null && user.getPassword().equals(password)) {
-            return user;
-        }
-        return null;
+        wrapper.orderByAsc(SysUser::getId);
+        return sysUserService.list(wrapper);
     }
 }

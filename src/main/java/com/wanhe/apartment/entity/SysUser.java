@@ -68,7 +68,7 @@ public class SysUser implements Serializable {
     private Long storeId;
 
     /**
-     * 用户类型: 1-超级管理员, 2-门店管理员, 3-店长, 4-管家, 5-财务, 6-维修工, 7-保洁员
+     * 用户类型: 1-超级管理员, 2-门店管理员, 3-店长, 4-管家, 5-财务, 6-维修工, 7-保洁员, 8-租客
      */
     private Byte userType;
 

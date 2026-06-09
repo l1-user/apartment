@@ -1,5 +1,7 @@
 package com.wanhe.apartment.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,6 +30,7 @@ public class VReceivableStats implements Serializable {
     /**
      * 租户ID
      */
+    @TableId(value = "tenant_id", type = IdType.INPUT)
     private Long tenantId;
 
     /**
