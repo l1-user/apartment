@@ -1,18 +1,21 @@
 package com.wanhe.apartment.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wanhe.apartment.dto.LoginRequest;
 import com.wanhe.apartment.dto.LoginResponse;
+import com.wanhe.apartment.entity.SysOperLog;
 import com.wanhe.apartment.entity.SysUser;
 import com.wanhe.apartment.service.IAuthService;
+import com.wanhe.apartment.service.ISysOperLogService;
 import com.wanhe.apartment.service.ISysUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,25 +34,91 @@ public class AuthController {
     @Autowired
     private ISysUserService sysUserService;
     
+    @Autowired
+    private ISysOperLogService sysOperLogService;
+    
     /**
      * 用户登录
      */
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "支持管理员和租户登录，根据用户类型返回不同的菜单权限")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         LoginResponse response = authService.login(request);
         
+        // 获取真实IP地址
+        String ipAddress = getClientIpAddress(httpRequest);
+        
         if (response != null) {
+            // 记录成功登录的操作日志
+            saveOperLog(request.getUsername(), ipAddress, "POST", "/api/auth/login", 
+                       "{\"username\":\"" + request.getUsername() + "\"}", 1, "登录成功");
+            
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("message", "登录成功");
             result.put("data", response);
             return ResponseEntity.ok(result);
         } else {
+            // 记录登录失败的操作日志
+            saveOperLog(request.getUsername(), ipAddress, "POST", "/api/auth/login", 
+                       "{\"username\":\"" + request.getUsername() + "\"}", 0, "用户名或密码错误");
+            
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
             result.put("message", "用户名或密码错误");
             return ResponseEntity.ok(result);
+        }
+    }
+    
+    /**
+     * 获取客户端真实IP地址
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // 如果是多个IP（代理链），取第一个
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
+    }
+    
+    /**
+     * 保存操作日志
+     */
+    private void saveOperLog(String username, String ipAddress, String method, 
+                           String requestUrl, String requestParams, int status, String errorMsg) {
+        try {
+            SysOperLog operLog = new SysOperLog();
+            operLog.setUserId(null); // 登录时还没有用户ID
+            operLog.setUsername(username);
+            operLog.setOperation("用户登录");
+            operLog.setMethod(method);
+            operLog.setRequestUrl(requestUrl);
+            operLog.setRequestParams(requestParams);
+            operLog.setStatus((byte) status);
+            operLog.setIpAddress(ipAddress);
+            operLog.setErrorMsg(errorMsg);
+            operLog.setOperTime(LocalDateTime.now());
+            operLog.setIsDeleted((byte) 0);
+            sysOperLogService.save(operLog);
+        } catch (Exception e) {
+            // 日志记录失败不影响业务
+            e.printStackTrace();
         }
     }
     
