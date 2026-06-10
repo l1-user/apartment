@@ -62,9 +62,9 @@ public class TenantPortalController {
             if (user.getPhone() != null && !user.getPhone().isEmpty()) {
                 wrapper.eq(Tenant::getPhone, user.getPhone());
                 wrapper.eq(Tenant::getIsDeleted, 0);
-                Tenant tenant = tenantService.getOne(wrapper);
-                if (tenant != null) {
-                    return tenant.getId();
+                List<Tenant> tenants = tenantService.list(wrapper);
+                if (!tenants.isEmpty()) {
+                    return tenants.get(0).getId();
                 }
             }
             
@@ -72,9 +72,9 @@ public class TenantPortalController {
                 wrapper.clear();
                 wrapper.eq(Tenant::getEmail, user.getEmail());
                 wrapper.eq(Tenant::getIsDeleted, 0);
-                Tenant tenant = tenantService.getOne(wrapper);
-                if (tenant != null) {
-                    return tenant.getId();
+                List<Tenant> tenants = tenantService.list(wrapper);
+                if (!tenants.isEmpty()) {
+                    return tenants.get(0).getId();
                 }
             }
             
@@ -82,9 +82,9 @@ public class TenantPortalController {
                 wrapper.clear();
                 wrapper.eq(Tenant::getRealName, user.getRealName());
                 wrapper.eq(Tenant::getIsDeleted, 0);
-                Tenant tenant = tenantService.getOne(wrapper);
-                if (tenant != null) {
-                    return tenant.getId();
+                List<Tenant> tenants = tenantService.list(wrapper);
+                if (!tenants.isEmpty()) {
+                    return tenants.get(0).getId();
                 }
             }
         }
@@ -220,8 +220,28 @@ public class TenantPortalController {
     @PostMapping("/maintenance/submit")
     @Operation(summary = "提交维修工单")
     public ResponseEntity<?> submitMaintenanceOrder(@RequestBody Map<String, Object> orderData) {
-        Long userId = ((Number) orderData.get("tenantId")).longValue();
+        Object tenantIdObj = orderData.get("tenantId");
+        Long userId = null;
+        
+        if (tenantIdObj != null) {
+            if (tenantIdObj instanceof Number) {
+                userId = ((Number) tenantIdObj).longValue();
+            } else if (tenantIdObj instanceof String) {
+                String tenantIdStr = ((String) tenantIdObj).trim();
+                if (!tenantIdStr.isEmpty()) {
+                    userId = Long.parseLong(tenantIdStr);
+                }
+            }
+        }
+        
         Long tenantId = getTenantIdByUserId(userId);
+        
+        if (tenantId == null) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "未找到租户信息");
+            return ResponseEntity.ok(result);
+        }
         
         Room currentRoom = null;
         
@@ -238,6 +258,7 @@ public class TenantPortalController {
             contractWrapper.eq(Contract::getContractStatus, 2);
             contractWrapper.eq(Contract::getIsDeleted, 0);
             contractWrapper.orderByDesc(Contract::getStartDate);
+            contractWrapper.last("LIMIT 1");
             Contract activeContract = contractService.getOne(contractWrapper);
             
             if (activeContract != null && activeContract.getRoomId() != null) {
@@ -344,6 +365,7 @@ public class TenantPortalController {
             contractWrapper.eq(Contract::getContractStatus, 2);
             contractWrapper.eq(Contract::getIsDeleted, 0);
             contractWrapper.orderByDesc(Contract::getStartDate);
+            contractWrapper.last("LIMIT 1");
             Contract activeContract = contractService.getOne(contractWrapper);
             
             if (activeContract != null && activeContract.getRoomId() != null) {

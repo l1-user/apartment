@@ -9,6 +9,8 @@ spring:
     username: root
     password: 2005-02-02
     url: jdbc:mysql://localhost:3306/apartment_hubs?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+  config:
+    import: ai-config.yaml
 
 mybatis-plus:
   configuration:

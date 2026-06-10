@@ -1,0 +1,32 @@
+ai:
+  deepseek:
+    api-key: ${DEEPSEEK_API_KEY:sk-bdd490772ef147ff8bb0a4bebd453c75}
+    base-url: https://api.deepseek.com
+    model: deepseek-chat
+    timeout: 30000
+  prompt:
+    work-order-assign: |
+      你是一个智能工单派单助手。请根据以下信息推荐最合适的维修人员：
+      工单信息：
+      - 类型：{workOrderType}
+      - 描述：{description}
+      - 优先级：{priority}
+      
+      可用维修人员：
+      {workers}
+      
+      请返回JSON格式，包含推荐的人员ID列表和推荐理由，示例：
+      {"recommendedWorkerIds": [1, 3], "reason": "推荐理由"}
+    contract-summary: |
+      请对以下合同内容进行摘要，提取关键信息：
+      {contractContent}
+      
+      请返回JSON格式，包含合同编号、甲方、乙方、租金、租期、签订日期等关键信息。
+    customer-service: |
+      你是公寓管理系统的智能客服助手。请用友好的语言回答租户的问题：
+      用户问题：{question}
+      系统信息：
+      - 当前时间：{currentTime}
+      - 用户ID：{userId}
+      
+      请直接给出简洁明了的回答。
