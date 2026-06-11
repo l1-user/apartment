@@ -1,6 +1,6 @@
 ai:
   deepseek:
-    api-key: ${DEEPSEEK_API_KEY:sk-bdd490772ef147ff8bb0a4bebd453c75}
+    api-key: ${DEEPSEEK_API_KEY:}   //填入DeepSeek的API Key
     base-url: https://api.deepseek.com
     model: deepseek-chat
     timeout: 30000
